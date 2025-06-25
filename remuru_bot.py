@@ -1,6 +1,7 @@
 import telebot
 from flask import Flask, request
 import openai
+import time  # Для добавления задержки
 
 # Токен Telegram-бота от BotFather
 API_TOKEN = '7894658829:AAFS2tpJ942-UNkYGzETAuHaFdlyMeQ9beQ'  # Замените на свой токен
@@ -23,6 +24,7 @@ def send_welcome(message):
 # Обработчик текстовых сообщений
 @bot.message_handler(content_types=['text'])
 def handle_text(message):
+    time.sleep(1)  # Задержка 1 секунда между запросами для предотвращения ошибки 429
     prompt = message.text
     response = openai.Completion.create(
         engine="text-davinci-003",  # Или любой другой GPT-3/4
@@ -31,8 +33,11 @@ def handle_text(message):
     )
     bot.reply_to(message, response.choices[0].text.strip())
 
-bot.remove_webhook()
-bot.set_webhook(url='https://remuru-bot.onrender.com/bot7894658829:AAFS2tpJ942-UNkYGzETAuHaFdlyMeQ9beQ')
+# Установка вебхука
+# Замените <RENDER_URL> на ваш URL с Render
+# Замените <YOUR_API_TOKEN> на ваш Telegram токен
+bot.remove_webhook()  # Удаление старого вебхука (если есть)
+bot.set_webhook(url='https://remuru-bot.onrender.com/bot7894658829:AAFS2tpJ942-UNkYGzETAuHaFdlyMeQ9beQ')  # Ваш URL с Render
 
 # Обработчик webhook
 @app.route('/' + API_TOKEN, methods=['POST'])
@@ -47,8 +52,8 @@ def index():
 
 if __name__ == "__main__":
     # Убедитесь, что вебхук правильно установлен, если нет — установите его
-    bot.remove_webhook()
-    bot.set_webhook(url='https://<RENDER_URL>/bot<YOUR_API_TOKEN>')
+    bot.remove_webhook()  # Удаление старого вебхука (если есть)
+    bot.set_webhook(url='https://remuru-bot.onrender.com/bot7894658829:AAFS2tpJ942-UNkYGzETAuHaFdlyMeQ9beQ')  # Убедитесь, что URL правильный
 
     # Запуск Flask приложения
     app.run(host="0.0.0.0", port=10000)
