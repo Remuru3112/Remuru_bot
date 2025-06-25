@@ -4,8 +4,8 @@ import telebot
 import openai
 
 # API tokens
-API_TOKEN = 'ТВОЙ_ТОКЕН_БОТА'
-OPENAI_API_KEY = 'ТВОЙ_OPENAI_API_KEY'
+API_TOKEN = '7894658829:AAHq2EWIkde3KGubcafgmE9iRzWGewRN-b4'
+OPENAI_API_KEY = 'sk-proj-RNiJdvn0u2IeF7A644bls7STbJtVF8h_fqZ1Z5s0XsJWTnK7wjjxsB'
 
 # Initialize bot and Flask app
 bot = telebot.TeleBot(API_TOKEN)
