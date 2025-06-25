@@ -1,12 +1,11 @@
-
 from flask import Flask, request
 import telebot
 import time
 from openai import OpenAI
 
 # 🔐 Telegram и OpenAI токены
-API_TOKEN = '7894658829:AAHAul9aLv632y_EtlBviNSAby4GjylJ_KI'
-OPENAI_API_KEY = "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"
+API_TOKEN = '7894658829:AAFS2tpJ942-UNkYGzETAuHaFdlyMeQ9beQ'
+OPENAI_API_KEY = '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'
 
 # 🌐 Адрес вебхука
 WEBHOOK_URL = 'https://remuru-bot.onrender.com'
@@ -26,17 +25,25 @@ def send_welcome(message):
 def handle_text(message):
     try:
         prompt = message.text
-        time.sleep(1)
+        time.sleep(1)  # Задержка для Telegram API
+
+        # Обработка запроса к OpenAI
         response = client.chat.completions.create(
-            model="gpt-3.5-turbo",
+            model="gpt-3.5-turbo",  # Или "gpt-4" если у тебя есть доступ
             messages=[
                 {"role": "system", "content": "Ты помощник по имени Remuru, умный, ироничный и доброжелательный."},
                 {"role": "user", "content": prompt}
             ]
         )
+
         reply = response.choices[0].message.content.strip()
         bot.reply_to(message, reply)
+
+    except openai.error.AuthenticationError as e:
+        print(f"Ошибка авторизации: {e}")
+        bot.reply_to(message, "Ошибка авторизации с OpenAI. Проверьте API-ключ.")
     except Exception as e:
+        print(f"Общая ошибка: {e}")
         bot.reply_to(message, f"Ошибка при обработке запроса: {e}")
 
 # Webhook обработчик
