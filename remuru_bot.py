@@ -20,27 +20,47 @@ openai.api_key = OPENAI_API_KEY
 def send_welcome(message):
     bot.reply_to(message, "Привет, я Remuru! Готов анализировать и озвучивать тексты.")
 
-# Обработка текста
-@bot.message_handler(content_types=['text'])
-def handle_text(message):
+# Обработка текста и изображений
+@bot.message_handler(content_types=['text', 'photo'])
+def handle_text_or_image(message):
     try:
-        prompt = message.text
-        time.sleep(1)  # Задержка для Telegram API
+        # Если прислано изображение
+        if message.photo:
+            # Скачиваем фото
+            file_info = bot.get_file(message.photo[-1].file_id)
+            file_path = file_info.file_path
+            file_url = f'https://api.telegram.org/file/bot{API_TOKEN}/{file_path}'
 
-        # Новый запрос с использованием tools и web_search_preview
-        response = openai.ChatCompletion.create(
-            model="gpt-4.1",  # Используем GPT-4.1
-            messages=[
-                {"role": "system", "content": "Ты помощник по имени Remuru, умный, ироничный и доброжелательный."},
-                {"role": "user", "content": prompt}
-            ],
-            tools=[
-                {"type": "web_search_preview", "input": "What was a positive news story from today?"}
-            ]
-        )
+            # Используем OpenAI API для обработки изображения
+            response = openai.ChatCompletion.create(
+                model="gpt-4.1",
+                messages=[
+                    {"role": "system", "content": "Ты помощник по имени Remuru, умный, ироничный и доброжелательный."},
+                    {"role": "user", "content": "What two teams are playing in this photo?"},
+                    {"role": "user", "content": [
+                        {"type": "input_image", "image_url": file_url}
+                    ]}
+                ]
+            )
+            
+            # Ответ от OpenAI
+            reply = response.choices[0].message.content.strip()
+            bot.reply_to(message, reply)
+        else:
+            # Если это просто текст
+            prompt = message.text
+            time.sleep(1)  # Задержка для Telegram API
 
-        reply = response['choices'][0]['message']['content'].strip()
-        bot.reply_to(message, reply)
+            response = openai.ChatCompletion.create(
+                model="gpt-4.1",  # Используем GPT-4.1
+                messages=[
+                    {"role": "system", "content": "Ты помощник по имени Remuru, умный, ироничный и доброжелательный."},
+                    {"role": "user", "content": prompt}
+                ]
+            )
+
+            reply = response['choices'][0]['message']['content'].strip()
+            bot.reply_to(message, reply)
 
     except openai.error.AuthenticationError as e:
         print(f"Ошибка авторизации: {e}")
