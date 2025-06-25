@@ -3,7 +3,7 @@ from flask import Flask, request
 import openai
 
 # Токен Telegram-бота от BotFather
-API_TOKEN = '7894658829:AAHq2EWIkde3KGubcafgmE9iRzWGewRN-b4'  # Замените на свой токен
+API_TOKEN = '7894658829:AAFS2tpJ942-UNkYGzETAuHaFdlyMeQ9beQ'  # Замените на свой токен
 
 # Ключ OpenAI (если используете OpenAI)
 OPENAI_API_KEY = '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'  # Замените на свой ключ
@@ -31,10 +31,8 @@ def handle_text(message):
     )
     bot.reply_to(message, response.choices[0].text.strip())
 
-# Установка вебхука
-# Замените <RENDER_URL> на ваш URL с Render
-# Замените <YOUR_API_TOKEN> на ваш Telegram токен
-bot.set_webhook(url='https://<RENDER_URL>/bot<YOUR_API_TOKEN>')
+bot.remove_webhook()
+bot.set_webhook(url='https://remuru-bot.onrender.com/bot7894658829:AAFS2tpJ942-UNkYGzETAuHaFdlyMeQ9beQ')
 
 # Обработчик webhook
 @app.route('/' + API_TOKEN, methods=['POST'])
