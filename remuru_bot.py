@@ -20,19 +20,27 @@ openai.api_key = OPENAI_API_KEY
 def send_welcome(message):
     bot.reply_to(message, "Привет, я Remuru! Готов анализировать и озвучивать тексты.")
 
-# 💬 Текстовые сообщения
+# 💬 Текстовые сообщения (обновлённый код для работы с новой версией OpenAI)
 @bot.message_handler(content_types=['text'])
 def handle_text(message):
     try:
         prompt = message.text
         # Задержка для Telegram API
-        time.sleep(1)
-        response = openai.Completion.create(
-            engine="text-davinci-003",
-            prompt=prompt,
-            max_tokens=150
+        time.sleep(1)  # задержка для Telegram API
+
+        # Используем ChatCompletion для обработки текста
+        response = openai.ChatCompletion.create(
+            model="gpt-3.5-turbo",  # или "gpt-4" если у тебя есть доступ
+            messages=[
+                {"role": "system", "content": "Ты помощник по имени Remuru, умный, ироничный и доброжелательный."},
+                {"role": "user", "content": prompt}
+            ]
         )
-        bot.reply_to(message, response.choices[0].text.strip())
+
+        # Ответ от OpenAI
+        reply = response.choices[0].message.content.strip()
+        bot.reply_to(message, reply)
+
     except Exception as e:
         bot.reply_to(message, f"Ошибка при обработке запроса: {e}")
 
