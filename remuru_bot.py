@@ -1,7 +1,7 @@
-from flask import Flask, request
+import openai
 import telebot
 import time
-from openai import OpenAI
+from flask import Flask, request
 
 # 🔐 Telegram и OpenAI токены
 API_TOKEN = '7894658829:AAFS2tpJ942-UNkYGzETAuHaFdlyMeQ9beQ'
@@ -13,7 +13,7 @@ WEBHOOK_URL = 'https://remuru-bot.onrender.com'
 # Инициализация
 bot = telebot.TeleBot(API_TOKEN)
 app = Flask(__name__)
-client = OpenAI(api_key=OPENAI_API_KEY)
+openai.api_key = OPENAI_API_KEY
 
 # Команда /start и /hello
 @bot.message_handler(commands=['start', 'hello'])
@@ -27,16 +27,19 @@ def handle_text(message):
         prompt = message.text
         time.sleep(1)  # Задержка для Telegram API
 
-        # Обработка запроса к OpenAI
-        response = client.chat.completions.create(
-            model="gpt-3.5-turbo",  # Или "gpt-4" если у тебя есть доступ
+        # Новый запрос с использованием tools и web_search_preview
+        response = openai.ChatCompletion.create(
+            model="gpt-4.1",  # Используем GPT-4.1
             messages=[
                 {"role": "system", "content": "Ты помощник по имени Remuru, умный, ироничный и доброжелательный."},
                 {"role": "user", "content": prompt}
+            ],
+            tools=[
+                {"type": "web_search_preview", "input": "What was a positive news story from today?"}
             ]
         )
 
-        reply = response.choices[0].message.content.strip()
+        reply = response['choices'][0]['message']['content'].strip()
         bot.reply_to(message, reply)
 
     except openai.error.AuthenticationError as e:
