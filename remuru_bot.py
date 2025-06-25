@@ -1,62 +1,57 @@
 import telebot
-import openai
-import asyncio
 from flask import Flask, request
+import openai
 import time
 
-# Токен Telegram-бота от BotFather
+# 🔐 Telegram Bot Token и OpenAI API ключ
 API_TOKEN = '7894658829:AAFS2tpJ942-UNkYGzETAuHaFdlyMeQ9beQ'
-
-# Ключ OpenAI (если используете OpenAI)
 OPENAI_API_KEY = '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'
 
-# Инициализация бота и Flask приложения
+# 🌐 Webhook адрес (твой Render-домен без слэша на конце!)
+WEBHOOK_URL = 'https://remuru-bot.onrender.com'
+
+# Инициализация
 bot = telebot.TeleBot(API_TOKEN)
 app = Flask(__name__)
-
-# Настройка OpenAI API
 openai.api_key = OPENAI_API_KEY
 
-# Очередь для обработки сообщений
-async def handle_text(message):
-    prompt = message.text
-    response = openai.Completion.create(
-        engine="text-davinci-003",  # Или любой другой GPT-3/4
-        prompt=prompt,
-        max_tokens=150
-    )
-    bot.reply_to(message, response.choices[0].text.strip())
-    await asyncio.sleep(1)  # Задержка между запросами для предотвращения ошибки 429
-
-# Обработчик команды /start и /hello
+# 📩 Команды бота
 @bot.message_handler(commands=['start', 'hello'])
 def send_welcome(message):
-    bot.reply_to(message, "Привет, я Remuru! Готов к анализу и озвучке.")
+    bot.reply_to(message, "Привет, я Remuru! Готов анализировать и озвучивать тексты.")
 
-# Обработчик текстовых сообщений
+# 💬 Текстовые сообщения
 @bot.message_handler(content_types=['text'])
-def process_message(message):
-    asyncio.ensure_future(handle_text(message))  # Асинхронный запуск обработки текста
+def handle_text(message):
+    try:
+        prompt = message.text
+        # Задержка для Telegram API
+        time.sleep(1)
+        response = openai.Completion.create(
+            engine="text-davinci-003",
+            prompt=prompt,
+            max_tokens=150
+        )
+        bot.reply_to(message, response.choices[0].text.strip())
+    except Exception as e:
+        bot.reply_to(message, f"Ошибка при обработке запроса: {e}")
 
-# Установка вебхука
-bot.remove_webhook()
-bot.set_webhook(url='https://remuru-bot.onrender.com/bot7894658829:AAFS2tpJ942-UNkYGzETAuHaFdlyMeQ9beQ')
+# 📬 Webhook от Telegram
+@app.route(f'/bot{API_TOKEN}', methods=['POST'])
+def receive_update():
+    json_string = request.get_data().decode('utf-8')
+    update = telebot.types.Update.de_json(json_string)
+    bot.process_new_updates([update])
+    return 'OK', 200
 
-# Обработчик webhook
-@app.route('/' + API_TOKEN, methods=['POST'])
-def webhook():
-    bot.process_new_updates([telebot.types.Update.de_json(request.stream.read().decode("utf-8"))])
-    return "!", 200
-
-# Главная страница
-@app.route("/")
+# 🌐 Проверка работы
+@app.route('/')
 def index():
-    return "Бот Remuru запущен!", 200
+    return 'Бот Remuru работает! ✅', 200
 
-if __name__ == "__main__":
-    # Убедитесь, что вебхук правильно установлен
+# 🔧 Запуск
+if __name__ == '__main__':
+    # Устанавливаем Webhook при запуске
     bot.remove_webhook()
-    bot.set_webhook(url='https://remuru-bot.onrender.com/bot7894658829:AAFS2tpJ942-UNkYGzETAuHaFdlyMeQ9beQ')
-
-    # Запуск Flask приложения
-    app.run(host="0.0.0.0", port=10000)
+    bot.set_webhook(url=f'{WEBHOOK_URL}/bot{API_TOKEN}')
+    app.run(host='0.0.0.0', port=10000)
