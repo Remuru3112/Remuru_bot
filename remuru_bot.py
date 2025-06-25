@@ -1,9 +1,8 @@
 import telebot
 import openai
-import time
+import asyncio
 from flask import Flask, request
-from queue import Queue
-from threading import Thread
+import time
 
 # Токен Telegram-бота от BotFather
 API_TOKEN = '7894658829:AAFS2tpJ942-UNkYGzETAuHaFdlyMeQ9beQ'
@@ -19,25 +18,15 @@ app = Flask(__name__)
 openai.api_key = OPENAI_API_KEY
 
 # Очередь для обработки сообщений
-message_queue = Queue()
-
-def process_message():
-    while True:
-        message = message_queue.get()
-        if message:
-            prompt = message.text
-            response = openai.Completion.create(
-                engine="text-davinci-003",  # Или любой другой GPT-3/4
-                prompt=prompt,
-                max_tokens=150
-            )
-            bot.reply_to(message, response.choices[0].text.strip())
-            time.sleep(1)  # Пауза между запросами
-
-# Поток для обработки очереди
-thread = Thread(target=process_message)
-thread.daemon = True
-thread.start()
+async def handle_text(message):
+    prompt = message.text
+    response = openai.Completion.create(
+        engine="text-davinci-003",  # Или любой другой GPT-3/4
+        prompt=prompt,
+        max_tokens=150
+    )
+    bot.reply_to(message, response.choices[0].text.strip())
+    await asyncio.sleep(1)  # Задержка между запросами для предотвращения ошибки 429
 
 # Обработчик команды /start и /hello
 @bot.message_handler(commands=['start', 'hello'])
@@ -46,8 +35,8 @@ def send_welcome(message):
 
 # Обработчик текстовых сообщений
 @bot.message_handler(content_types=['text'])
-def handle_text(message):
-    message_queue.put(message)  # Добавляем сообщение в очередь для обработки
+def process_message(message):
+    asyncio.ensure_future(handle_text(message))  # Асинхронный запуск обработки текста
 
 # Установка вебхука
 bot.remove_webhook()
@@ -65,6 +54,9 @@ def index():
     return "Бот Remuru запущен!", 200
 
 if __name__ == "__main__":
+    # Убедитесь, что вебхук правильно установлен
     bot.remove_webhook()
     bot.set_webhook(url='https://remuru-bot.onrender.com/bot7894658829:AAFS2tpJ942-UNkYGzETAuHaFdlyMeQ9beQ')
+
+    # Запуск Flask приложения
     app.run(host="0.0.0.0", port=10000)
