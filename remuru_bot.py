@@ -5,8 +5,8 @@ import time
 from openai import OpenAI
 
 # 🔐 Telegram и OpenAI токены
-API_TOKEN = '7894658829:AAFS2tpJ942-UNkYGzETAuHaFdlyMeQ9beQ'
-OPENAI_API_KEY = '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'
+API_TOKEN = '7894658829:AAHAul9aLv632y_EtlBviNSAby4GjylJ_KI'
+OPENAI_API_KEY = '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'
 
 # 🌐 Адрес вебхука
 WEBHOOK_URL = 'https://remuru-bot.onrender.com'
