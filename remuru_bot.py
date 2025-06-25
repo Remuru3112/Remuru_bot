@@ -6,7 +6,7 @@ from openai import OpenAI
 
 # 🔐 Telegram и OpenAI токены
 API_TOKEN = '7894658829:AAFS2tpJ942-UNkYGzETAuHaFdlyMeQ9beQ'
-OPENAI_API_KEY = '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'
+OPENAI_API_KEY = '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'
 
 # 🌐 Адрес вебхука
 WEBHOOK_URL = 'https://remuru-bot.onrender.com'
