@@ -1,26 +1,49 @@
-from flask import Flask, request
-import telebot
+import os
+from flask import Flask, request, jsonify
+import requests
+import openai
+import pyttsx3
 
-# 🔐 Telegram API Token
-API_TOKEN = '7894658829:AAHAul9aLv632y_EtlBviNSAby4GjylJ_KI'
-WEBHOOK_URL = 'https://remuru-bot.onrender.com'
-
-# Инициализация
-bot = telebot.TeleBot(API_TOKEN)
 app = Flask(__name__)
 
-@app.route(f'/bot{API_TOKEN}', methods=['POST'])
-def receive_update():
-    json_string = request.get_data().decode('utf-8')
-    update = telebot.types.Update.de_json(json_string)
-    bot.process_new_updates([update])
-    return 'OK', 200
+# Получаем токены из переменных окружения
+TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
+openai.api_key = OPENAI_API_KEY
 
-@app.route('/')
-def index():
-    return 'Bot is working!', 200
+def send_message(chat_id, text):
+    url = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendMessage"
+    payload = {"chat_id": chat_id, "text": text}
+    requests.post(url, json=payload)
 
-if __name__ == '__main__':
-    bot.remove_webhook()
-    bot.set_webhook(url=f'{WEBHOOK_URL}/bot{API_TOKEN}')
-    app.run(host='0.0.0.0', port=10000)
+def generate_gpt_response(prompt):
+    response = openai.ChatCompletion.create(
+        model="gpt-4o",
+        messages=[{"role": "user", "content": prompt}],
+        max_tokens=150
+    )
+    return response.choices[0].message.content.strip()
+
+def tts_speak(text):
+    engine = pyttsx3.init()
+    engine.say(text)
+    engine.runAndWait()
+
+@app.route("/webhook", methods=["POST"])
+def webhook():
+    data = request.get_json()
+    if "message" in data:
+        chat_id = data["message"]["chat"]["id"]
+        user_text = data["message"].get("text", "")
+        bot_response = generate_gpt_response(user_text)
+        send_message(chat_id, bot_response)
+        print(f"Римуру говорит: {bot_response}")
+        tts_speak(bot_response)
+    return jsonify({"ok": True})
+
+@app.route("/", methods=["GET"])
+def home():
+    return "RemuruBot is alive!"
+
+if __name__ == "__main__":
+    app.run(host="0.0.0.0", port=10000)
